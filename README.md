@@ -64,10 +64,53 @@ handlers.slice().map((handler) => {
 
 ```
 
-5. microbundle
+5. microbundle 打包,支持多种模块化打包，能力来源于rollup
+```
+{
+  "name": "foo",                      
+  "type": "module",
+  "source": "src/foo.js",             // 源代码
+  "exports": {
+    "require": "./dist/foo.cjs",      // 用于Node 12+的require()
+    "default": "./dist/foo.modern.js" // 使用默认包
+  },
+  "main": "./dist/foo.cjs",           // 在哪个文件生成CommonJS bundle
+  "module": "./dist/foo.module.js",   // 在哪个文件生成 ESM bundle
+  "unpkg": "./dist/foo.umd.js",       // 在哪个文件生成 UMD bundle (also aliased as "umd:main")
+  "scripts": {
+    "build": "microbundle",           // compiles "source" to "main"/"module"/"unpkg"
+    "dev": "microbundle watch"        // re-build when source files change
+  }
+}
+```
 
 
 # tiny-emitter
 
 ## 实现
 定义了函数E，修改E.prototype，在原型对象中引入了on(name, callback, ctx)、once(name, callback, ctx)、emit(name)、off(name, callback)四个方法
+
+## 学习
+1. `[].slice.call(arguments, 1)`
+- slice(start, end) 方法可从已有的数组中返回选定的元素，返回新数组。 start从何处开始
+- call（）和apply（）方法都是在特定的作用域中调用函数，实际上等于设置函数体内this对象的值
+- Array.prototype.slice.call()可以理解为：改变数组的slice方法的作用域，在特定作用域中去调用slice方法，call（）方法的第二个参数表示传递给slice的参数即截取数组的起始位置。
+
+2. Browserify 打包: 本身不是模块管理器，只是让服务器端的CommonJS格式的模块可以运行在浏览器端。
+Browserify编译的时候，会将脚本所依赖的模块一起编译进去。这意味着，它可以将多个模块合并成一个文件
+
+# mitt 和 tiny-emitter 对比
+
+## 共同点
+1. 都支持on(type, handler)、off(type, [handler])和emit(type, [evt])三个方法来注册、注销、派发事件
+
+## 不同点
+- mitt
+1. 有all属性，可以拿到对应的事件类型和事件处理函数的映射对象，是一个Map不是{}
+2. 支持监听'*'事件，可以调用`emitter.all.clear()`来清除所有事件
+3. 返回的是一个对象，对象存在上面的属性
+
+- tiny-emitter
+1. 支持链式调用，通过e属性可以拿到所有事件
+2. 多一个once方法，支持设置`this`(指定上下文ctx)
+3. 返回的一个函数实例，通过修改该函数原型对象来实现的
